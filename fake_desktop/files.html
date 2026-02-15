@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Explorer</title>
+    <style>
+        :root {
+            --bg-color: #f3f3f3;
+            --sidebar-color: #eeeeee;
+            --hover-color: #e5e5e5;
+            --accent-color: #0067c0;
+            --text-main: #1a1a1a;
+        }
+
+        body {
+            font-family: "Segoe UI Variable", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Toolbar --- */
+        .toolbar {
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 20px;
+            border-bottom: 1px solid #ddd;
+            background: white;
+        }
+
+        .tool-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .tool-item:hover { background: var(--hover-color); }
+
+        /* --- Address Bar --- */
+        .address-bar-container {
+            height: 45px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 10px;
+            background: white;
+        }
+
+        .address-bar {
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 13px;
+        }
+
+        /* --- Main Layout --- */
+        .main-container {
+            display: flex;
+            flex-grow: 1;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: var(--sidebar-color);
+            padding: 10px;
+            border-right: 1px solid #ddd;
+        }
+
+        .nav-item {
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+
+        .nav-item:hover { background: var(--hover-color); }
+        .nav-item.active { background: #dceaf7; color: var(--accent-color); }
+
+        .content-area {
+            flex-grow: 1;
+            background: white;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 20px;
+        }
+
+        /* --- Files/Folders --- */
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover { background: #e9f3fb; }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 8px;
+            background: #ffd966; /* Folder Yellow */
+            border-radius: 4px;
+            position: relative;
+        }
+
+        /* Simple folder shape using CSS */
+        .icon::before {
+            content: "";
+            position: absolute;
+            top: -5px;
+            left: 0;
+            width: 20px;
+            height: 5px;
+            background: #ffd966;
+            border-radius: 2px 2px 0 0;
+        }
+
+        .file-name {
+            font-size: 12px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <div class="tool-item"><strong>+</strong> New</div>
+        <div class="tool-item">✂️ Cut</div>
+        <div class="tool-item">📋 Copy</div>
+        <div class="tool-item">📄 Paste</div>
+    </div>
+
+    <div class="address-bar-container">
+        <button style="border:none; background:none;">←</button>
+        <button style="border:none; background:none;">→</button>
+        <div class="address-bar">
+            This PC > Documents > Work
+        </div>
+        <input type="text" placeholder="Search Work" style="width: 200px; padding: 5px;">
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="nav-item">⭐ Quick access</div>
+            <div class="nav-item">☁️ OneDrive</div>
+            <div class="nav-item active">💻 This PC</div>
+            <div class="nav-item">🌐 Network</div>
+        </div>
+        
+        <div class="content-area" id="fileGrid">
+            </div>
+    </div>
+
+<script>
+  const folders = ["Documents", "Images", "Project_Alpha", "Invoices", "Memes", "Vacation_2025"];
+  const grid = document.getElementById('fileGrid');
+
+  // Keep session id if you came from desktop, otherwise create one
+  const SESSION_ID = sessionStorage.getItem("vf_session_id") || cryptoRandomId();
+  sessionStorage.setItem("vf_session_id", SESSION_ID);
+
+  // Optional: simple page timer (for lockdown forensic text)
+  const pageStartedAt = Date.now();
+
+  folders.forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `
+      <div class="icon"></div>
+      <div class="file-name">${name}</div>
+    `;
+
+    // ✅ Any click -> lockdown screen
+    div.onclick = () => triggerLockdownFromFiles(name);
+
+    grid.appendChild(div);
+  });
+
+  function triggerLockdownFromFiles(clickedName){
+    // prevent multiple redirects
+    if (sessionStorage.getItem("vf_lockdown_triggered") === "1") return;
+    sessionStorage.setItem("vf_lockdown_triggered", "1");
+
+    const sessionSeconds = Math.max(5, Math.round((Date.now() - pageStartedAt) / 1000));
+    const ip = `192.168.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`;
+
+    // Build payload in the format your lockdown/index.html reads
+    const payload = {
+      captureId: "VF_DECOY_2026_001",
+      sessionId: SESSION_ID,
+      sessionSeconds,
+      ip,
+      location: "Andheri, IN",
+
+      // Put something meaningful for your lockdown text
+      unauthorizedFileAttempts: 1,
+      blockedCommandAttempts: 0,
+      totalViolations: 1,
+
+      lastFile: clickedName,
+      lastCommand: "-",
+      reason: "file_clicked_in_files_page"
+    };
+
+    sessionStorage.setItem("vf_lockdown_payload", JSON.stringify(payload));
+
+    // Redirect to lockdown page
+    window.location.href = "lockdown/index.html";
+  }
+
+  function cryptoRandomId(){
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes).map(b => b.toString(16).padStart(2,"0")).join("");
+  }
+</script>
+
+</body>
+</html>

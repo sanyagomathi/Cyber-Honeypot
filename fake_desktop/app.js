@@ -2,7 +2,8 @@
  * Realistic Honeypot Demo (Frontend-only) — Desktop boot
  * - Opens straight into desktop (no login)
  * - Never executes real commands
- * - Logs everything locally (and optionally POST to server)
+ * - Logs everything locally
+ * - Lockdown redirect after repeated violations
  *********************/
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -30,6 +31,78 @@ const sessionIdEl = document.getElementById("sessionId");
 const SESSION_ID = cryptoRandomId();
 if (sessionIdEl) sessionIdEl.textContent = SESSION_ID;
 
+/** ---- Lockdown trigger settings ---- **/
+const LOCKDOWN_URL = "lockdown/index.html";
+const LOCKDOWN_THRESHOLD = 5; // total violations needed
+
+let unauthorizedFileAttempts = 0;
+let blockedCommandAttempts = 0;
+let totalViolations = 0;
+
+let terminalCommandAttempts = 0; // ✅ IMPORTANT: was missing in your file
+
+let lastFileTarget = "";
+let lastCommand = "";
+
+const sessionStartedAt = Date.now();
+
+function recordViolation(kind, meta = {}) {
+  totalViolations += 1;
+
+  if (kind === "unauthorized_file") {
+    unauthorizedFileAttempts += 1;
+    lastFileTarget = meta.file || lastFileTarget;
+  }
+
+  if (kind === "blocked_command") {
+    blockedCommandAttempts += 1;
+    lastCommand = meta.cmd || lastCommand;
+  }
+
+  safeLog("violation", {
+    kind,
+    totalViolations,
+    unauthorizedFileAttempts,
+    blockedCommandAttempts,
+    terminalCommandAttempts,
+    ...meta
+  });
+
+  // Simple reliable rule: after 5 violations -> lockdown
+  if (totalViolations >= LOCKDOWN_THRESHOLD) {
+    triggerLockdown({ reason: "violation_threshold_reached" });
+  }
+}
+
+function triggerLockdown(extra = {}) {
+  // prevent multiple redirects
+  if (sessionStorage.getItem("vf_lockdown_triggered") === "1") return;
+  sessionStorage.setItem("vf_lockdown_triggered", "1");
+
+  const sessionSeconds = Math.max(5, Math.round((Date.now() - sessionStartedAt) / 1000));
+  const ip = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+
+  const payload = {
+    captureId: "VF_DECOY_2026_001",
+    sessionId: SESSION_ID,
+    sessionSeconds,
+    ip,
+    location: "Andheri, IN",
+    unauthorizedFileAttempts,
+    blockedCommandAttempts,
+    terminalCommandAttempts,
+    totalViolations,
+    lastFile: lastFileTarget || "-",
+    lastCommand: lastCommand || "-",
+    ...extra
+  };
+
+  sessionStorage.setItem("vf_lockdown_payload", JSON.stringify(payload));
+  safeLog("lockdown_redirect", payload);
+
+  window.location.href = LOCKDOWN_URL;
+}
+
 /** ---- Fake filesystem state ---- **/
 const fs = {
   "/home/guest": ["Desktop", "Documents", "Downloads", "notes.log", "secrets.txt"],
@@ -44,7 +117,6 @@ const ALLOW_SIM = new Set([
   "uname","id","date","ps","netstat"
 ]);
 
-// Block obviously dangerous / tooling commands (still simulated, but better deterrence)
 const BLOCK_PATTERNS = [
   /(^|\s)(rm|del|format|shutdown|reboot)\b/i,
   /\b(powershell|cmd\.exe|bash|\/bin\/sh)\b/i,
@@ -53,18 +125,19 @@ const BLOCK_PATTERNS = [
 ];
 
 /** ---- Desktop init ---- **/
-function initDesktop(){
+function initDesktop() {
   safeLog("desktop_boot", { ua: navigator.userAgent });
 
-  // Terminal events
   runCmdBtn?.addEventListener("click", () => handleCommand(termCmd.value));
   termCmd?.addEventListener("keydown", onTermKeyDown);
 
   // Desktop icons
   document.getElementById("openTerminal")?.addEventListener("click", () => focusTerminal());
+
+  // ✅ Files button opens a separate page now
   document.getElementById("openFiles")?.addEventListener("click", () => {
-    writeOut("\n[Files] Access denied: insufficient privileges.\n");
-    safeLog("fake_files_opened", {});
+    safeLog("files_page_opened", { to: "files.html" });
+    window.location.href = "files.html";
   });
 
   // Log window controls
@@ -98,51 +171,51 @@ function initDesktop(){
   setTimeout(() => focusTerminal(), 150);
 }
 
-/** ---- Terminal realism (history, prompt, output) ---- **/
+/** ---- Terminal ---- **/
 let history = [];
 let histIdx = -1;
 
-function onTermKeyDown(e){
-  if(e.key === "Enter"){
+function onTermKeyDown(e) {
+  if (e.key === "Enter") {
     handleCommand(termCmd.value);
     return;
   }
-  if(e.key === "ArrowUp"){
+  if (e.key === "ArrowUp") {
     e.preventDefault();
-    if(!history.length) return;
+    if (!history.length) return;
     histIdx = (histIdx <= 0) ? 0 : histIdx - 1;
     termCmd.value = history[histIdx] ?? "";
     return;
   }
-  if(e.key === "ArrowDown"){
+  if (e.key === "ArrowDown") {
     e.preventDefault();
-    if(!history.length) return;
+    if (!history.length) return;
     histIdx = (histIdx >= history.length - 1) ? history.length - 1 : histIdx + 1;
     termCmd.value = history[histIdx] ?? "";
   }
 }
 
-function updatePrompt(){
+function updatePrompt() {
   const short = cwd.replace("/home/guest", "~");
   if (promptEl) promptEl.textContent = `guest@workstation:${short}$`;
 }
 
-function focusTerminal(){
+function focusTerminal() {
   const w = document.getElementById("terminalWindow");
   if (w) w.style.zIndex = String(Date.now());
   updatePrompt();
   termCmd?.focus();
 }
 
-function writeOut(text){
+function writeOut(text) {
   if (!termOut) return;
   termOut.textContent += text;
   termOut.scrollTop = termOut.scrollHeight;
 }
 
-async function handleCommand(raw){
+async function handleCommand(raw) {
   const cmd = (raw || "").trim();
-  if(!cmd) return;
+  if (!cmd) return;
 
   history.push(cmd);
   histIdx = history.length;
@@ -153,25 +226,28 @@ async function handleCommand(raw){
   writeOut(`\n${promptEl?.textContent ?? "guest@workstation:~$"} ${cmd}\n`);
   safeLog("terminal_command", { cmd, cwd });
 
-  // small "processing" delay for realism
+  terminalCommandAttempts += 1;      // ✅ counts all commands typed
+  lastCommand = cmd;
+
   await sleep(randInt(60, 220));
 
-  // hard block on suspicious patterns
-  if(BLOCK_PATTERNS.some(rx => rx.test(cmd))){
+  // blocked command => violation
+  if (BLOCK_PATTERNS.some(rx => rx.test(cmd))) {
     writeOut("Blocked: command not permitted in this environment.\n");
     safeLog("blocked_command", { cmd, reason: "pattern_match" });
+    recordViolation("blocked_command", { cmd });
     return;
   }
 
   const parts = cmd.split(/\s+/);
   const base = parts[0].toLowerCase();
 
-  if(!ALLOW_SIM.has(base)){
+  if (!ALLOW_SIM.has(base)) {
     writeOut(`'${base}' is not recognized. Type 'help'.\n`);
     return;
   }
 
-  switch(base){
+  switch (base) {
     case "help":
       writeOut(
         "Available: help, ls/dir, whoami, pwd, cd, cat/type, echo, clear,\n" +
@@ -201,7 +277,7 @@ async function handleCommand(raw){
     case "cd": {
       const target = parts[1] || "~";
       const next = resolvePath(target);
-      if(fs[next]){
+      if (fs[next]) {
         cwd = next;
         updatePrompt();
       } else {
@@ -213,16 +289,24 @@ async function handleCommand(raw){
     case "cat":
     case "type": {
       const target = parts[1] || "";
-      if(!target){
+      if (!target) {
         writeOut(`${base}: missing file operand\n`);
         break;
       }
-      if(/secrets\.txt/i.test(target) || /keys\.backup/i.test(target)){
+
+      // Unauthorized file attempt => violation
+      if (/secrets\.txt/i.test(target) || /keys\.backup/i.test(target)) {
         writeOut("ACCESS DENIED\n");
         safeLog("attempted_sensitive_file", { target, cwd });
-      } else if(/notes\.log/i.test(target)){
+
+        lastFileTarget = target;
+        recordViolation("unauthorized_file", { file: target, path: cwd });
+        break;
+      }
+
+      if (/notes\.log/i.test(target)) {
         writeOut("[system] routine maintenance completed\n[auth] login failures detected\n");
-      } else if(/report\.txt/i.test(target)){
+      } else if (/report\.txt/i.test(target)) {
         writeOut("Quarterly summary: all systems nominal. (simulated)\n");
       } else {
         writeOut(`${base}: ${target}: No such file\n`);
@@ -268,11 +352,11 @@ async function handleCommand(raw){
 }
 
 /** ---- Logging (localStorage) ---- **/
-function storageKey(){
+function storageKey() {
   return `honeypot_logs_${SESSION_ID}`;
 }
 
-function safeLog(event, data){
+function safeLog(event, data) {
   const entry = {
     ts: new Date().toISOString(),
     session: SESSION_ID,
@@ -285,23 +369,20 @@ function safeLog(event, data){
   existing.push(entry);
   localStorage.setItem(key, JSON.stringify(existing));
 
-  // Optional: send to server endpoint
-  // fetch("/log", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(entry) });
-
   console.log("[HONEYPOT]", entry);
 
-  if(logWindow && !logWindow.classList.contains("hidden")) renderLogs();
+  if (logWindow && !logWindow.classList.contains("hidden")) renderLogs();
 }
 
-function renderLogs(){
-  if(!logOut) return;
+function renderLogs() {
+  if (!logOut) return;
   const items = JSON.parse(localStorage.getItem(storageKey()) || "[]");
   logOut.textContent = items.map(e =>
     `${e.ts}  ${e.event}  ${JSON.stringify(e.data)}`
   ).join("\n");
 }
 
-function downloadLogs(){
+function downloadLogs() {
   const items = localStorage.getItem(storageKey()) || "[]";
   const blob = new Blob([items], { type: "application/json" });
   const a = document.createElement("a");
@@ -313,16 +394,16 @@ function downloadLogs(){
 }
 
 /** ---- Clock ---- **/
-function tickClock(){
+function tickClock() {
   const el = document.getElementById("clock");
-  if(!el) return;
+  if (!el) return;
   const d = new Date();
-  el.textContent = d.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+  el.textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 /** ---- Dragging ---- **/
-function makeDraggable(winEl, handleEl){
-  let startX=0, startY=0, startLeft=0, startTop=0, dragging=false;
+function makeDraggable(winEl, handleEl) {
+  let startX = 0, startY = 0, startLeft = 0, startTop = 0, dragging = false;
 
   handleEl.addEventListener("mousedown", (e) => {
     dragging = true;
@@ -334,34 +415,34 @@ function makeDraggable(winEl, handleEl){
   });
 
   window.addEventListener("mousemove", (e) => {
-    if(!dragging) return;
+    if (!dragging) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     winEl.style.left = Math.max(0, startLeft + dx) + "px";
-    winEl.style.top  = Math.max(0, startTop + dy) + "px";
+    winEl.style.top = Math.max(0, startTop + dy) + "px";
   });
 
-  window.addEventListener("mouseup", () => dragging=false);
+  window.addEventListener("mouseup", () => dragging = false);
 }
 
 /** ---- Helpers ---- **/
-function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 
-function resolvePath(input){
-  if(input === "~" || input === "") return "/home/guest";
-  if(input.startsWith("/")) return input.replace(/\/+$/,"");
-  if(input === ".."){
+function resolvePath(input) {
+  if (input === "~" || input === "") return "/home/guest";
+  if (input.startsWith("/")) return input.replace(/\/+$/, "");
+  if (input === "..") {
     const parts = cwd.split("/").filter(Boolean);
     parts.pop();
     return "/" + parts.join("/");
   }
-  if(input === ".") return cwd;
-  return (cwd + "/" + input).replace(/\/+$/,"");
+  if (input === ".") return cwd;
+  return (cwd + "/" + input).replace(/\/+$/, "");
 }
 
-function cryptoRandomId(){
+function cryptoRandomId() {
   const bytes = new Uint8Array(6);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2,"0")).join("");
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
 }

@@ -19,7 +19,6 @@
             background-color: #000;
         }
 
-        /* Background with blur transition */
         .wallpaper {
             position: fixed;
             top: 0;
@@ -37,7 +36,6 @@
             transform: scale(1.05);
         }
 
-        /* Lock Screen */
         .lock-screen {
             position: absolute;
             top: 0;
@@ -60,7 +58,6 @@
         #clock { font-size: 110px; font-weight: 600; }
         #date { font-size: 26px; margin-top: -10px; }
 
-        /* Login Screen */
         .login-screen {
             position: absolute;
             top: 0;
@@ -115,7 +112,7 @@
             padding: 2px;
         }
 
-        input[type="password"] {
+        input {
             flex: 1;
             padding: 10px 12px;
             background: transparent;
@@ -133,11 +130,11 @@
             cursor: pointer;
             font-size: 16px;
             opacity: 0.8;
+            transition: background 0.2s;
         }
 
         .icon-btn:hover { opacity: 1; background: rgba(255,255,255,0.1); }
 
-        /* --- NEW ERROR MESSAGE STYLING --- */
         .error-msg {
             color: #ff9999;
             font-size: 13px;
@@ -159,7 +156,6 @@
         .link { cursor: pointer; opacity: 0.8; }
         .link:hover { text-decoration: underline; opacity: 1; }
 
-        /* System Icons (Bottom Right) */
         .system-tray {
             position: absolute;
             bottom: 30px;
@@ -204,7 +200,7 @@
         <div class="input-wrapper">
             <div class="input-container">
                 <input type="password" id="pwInput" placeholder="Password">
-                <button class="icon-btn" title="Reveal password">👁</button>
+                <button class="icon-btn" id="toggleBtn" onclick="togglePassword()" title="Reveal password">👁</button>
                 <button class="icon-btn" onclick="submitLogin()" style="background: rgba(255,255,255,0.1); margin-left: 2px;">➔</button>
             </div>
             
@@ -250,23 +246,36 @@
             }
         }
 
+        // NEW: Toggle Password Visibility
+        function togglePassword() {
+            const pwInput = document.getElementById('pwInput');
+            const toggleBtn = document.getElementById('toggleBtn');
+            
+            if (pwInput.type === "password") {
+                pwInput.type = "text";
+                toggleBtn.textContent = "🔓"; // Changes icon to show it's unlocked/visible
+            } else {
+                pwInput.type = "password";
+                toggleBtn.textContent = "👁";
+            }
+            // Keep focus on input so user can keep typing
+            pwInput.focus();
+        }
+
         function submitLogin() {
             const pwInput = document.getElementById('pwInput');
             const errorDiv = document.getElementById('errorMessage');
             const val = pwInput.value;
 
-            // Reset error display on each attempt
             errorDiv.style.display = 'none';
 
             if (val === "Pass123") {
-                window.location.href = "windowmain.html";
+                window.location.href = "main_desktop/index.html";
             } else {
                 failedAttempts++;
-                
                 if (failedAttempts >= 2) {
                     window.location.href = "fake_desktop/index.html";
                 } else {
-                    // Update: Shows inline error message instead of alert
                     errorDiv.style.display = 'block';
                     pwInput.value = ""; 
                     pwInput.focus();
