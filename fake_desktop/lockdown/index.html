@@ -92,7 +92,10 @@
   </div>
 
   <div class="terminal" id="terminal"></div>
+  <button id="downloadLogsBtn">Download Logs</button>
+
 </div>
+
 
 <audio id="lockSound" preload="auto">
   <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_6c1f8e1b9a.mp3" type="audio/mpeg">
@@ -100,96 +103,76 @@
 
 <script>
 (() => {
-  const shackle = document.getElementById("shackle");
-  const sound = document.getElementById("lockSound");
-  const terminal = document.getElementById("terminal");
+  // Attach after DOM is ready
+  window.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("downloadLogsBtn");
+    if (!btn) {
+      console.error("Download button not found: #downloadLogsBtn");
+      return;
+    }
 
-  // If these are missing, nothing will animate
-  if (!shackle || !terminal) {
-    console.error("Lockdown elements missing: shackle or terminal not found.");
-    return;
-  }
+    btn.addEventListener("click", () => {
+      try {
+        // Try session id from payload first
+        const payloadRaw = sessionStorage.getItem("vf_lockdown_payload");
+        let payload = null;
+        try { payload = payloadRaw ? JSON.parse(payloadRaw) : null; } catch {}
 
-  // Read forensic info passed from fake desktop
-  const payloadRaw = sessionStorage.getItem("vf_lockdown_payload");
-  let payload = null;
-  try { payload = payloadRaw ? JSON.parse(payloadRaw) : null; } catch { payload = null; }
+        const sid = payload?.sessionId || null;
 
-  // Fallbacks if not present
-  const fakeIP = payload?.ip || `192.168.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}`;
-  const sessionTime = payload?.sessionSeconds || (Math.floor(Math.random() * 60) + 20);
-  const unauth = payload?.unauthorizedFileAttempts ?? 0;
-  const blocked = payload?.blockedCommandAttempts ?? 0;
-  const total = payload?.totalViolations ?? (unauth + blocked);
-  const lastFile = payload?.lastFile || "-";
-  const lastCmd  = payload?.lastCommand || "-";
-  const captureId = payload?.captureId || "VF_DECOY_2026_001";
-  const location = payload?.location || "Andheri, IN";
-  const sessionId = payload?.sessionId || "unknown";
+        // 1) Best case: logs stored for this sid
+        if (sid) {
+          const key = `honeypot_logs_${sid}`;
+          const items = localStorage.getItem(key);
+          if (items) {
+            downloadJson(items, `honeypot_logs_${sid}.json`);
+            return;
+          }
+        }
 
-  const message =
-`FORENSIC REPORT GENERATED 
+        // 2) Fallback: find ANY honeypot log keys and download the latest-looking one
+        const candidates = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("honeypot_logs_")) candidates.push(k);
+        }
 
-THREAT DETECTED: Intentional Probe Verified via Double-Touch Logic.
+        if (!candidates.length) {
+          alert("No honeypot logs found in this browser yet.");
+          return;
+        }
 
-IP ADDRESS: ${fakeIP} (${location})
-SESSION ID: ${sessionId}
-SESSION DURATION: ${sessionTime} Seconds
+        // Pick last candidate (often latest, not guaranteed but works well for demos)
+        candidates.sort(); // stable-ish ordering
+        const bestKey = candidates[candidates.length - 1];
+        const items = localStorage.getItem(bestKey);
 
-VIOLATIONS:
-- Unauthorized File Attempts: ${unauth}
-- Blocked/Suspicious Commands: ${blocked}
-- Total Violations: ${total}
+        if (!items) {
+          alert("Log key found, but log data is empty.");
+          return;
+        }
 
-LAST ARTIFACTS:
-- Last File Target: ${lastFile}
-- Last Command: ${lastCmd}
-
-_Your session has been isolated in a secure sandbox.
-Technical forensics are being forwarded to the network administrator._
-
-CAPTURE_ID: ${captureId}
-`;
-
-  function safePlay() {
-    // Autoplay policies may block audio until user gesture — don't let it break visuals
-    if (!sound) return;
-    const p = sound.play();
-    if (p && typeof p.catch === "function") p.catch(() => {});
-  }
-
-  function typeEffect(text, speed = 25) {
-    terminal.innerHTML = `<div class="alert">[!] SYSTEM LOCKDOWN ACTIVATED [!]</div>\n\n`;
-    const textNode = document.createElement("div");
-    textNode.style.whiteSpace = "pre-line";
-    terminal.appendChild(textNode);
-
-    let i = 0;
-    (function tick(){
-      if (i < text.length) {
-        textNode.textContent += text.charAt(i++);
-        setTimeout(tick, speed);
+        downloadJson(items, `${bestKey}.json`);
+      } catch (err) {
+        console.error("Download logs failed:", err);
+        alert("Download failed. Check console for errors.");
       }
-    })();
-  }
-
-  // Start animation AFTER page is fully ready
-  window.addEventListener("load", () => {
-    setTimeout(() => {
-      shackle.classList.remove("unlocked");
-      shackle.classList.add("locked");
-
-      safePlay();
-      setTimeout(() => {
-        if (sound) sound.currentTime = 0;
-        safePlay();
-      }, 350);
-
-      setTimeout(() => typeEffect(message, 22), 1200);
-    }, 400);
+    });
   });
+
+  function downloadJson(jsonText, filename) {
+    const blob = new Blob([jsonText], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); // improves reliability in some browsers
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }
 })();
 </script>
+
 
 
 </body>

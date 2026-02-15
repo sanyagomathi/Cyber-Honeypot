@@ -265,6 +265,19 @@ button:active{ transform: translateY(1px); }
 #runCmd{
   padding: 10px 12px;
 }
+#downloadLogsBtn{
+  margin-top: 18px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(124,255,124,0.55);
+  background: rgba(124,255,124,0.12);
+  color: #7CFF7C;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+}
+#downloadLogsBtn:hover{
+  background: rgba(124,255,124,0.20);
+}
 
 .log-actions{
   display:flex;

@@ -30,6 +30,7 @@ const exportLogs = document.getElementById("exportLogs");
 const sessionIdEl = document.getElementById("sessionId");
 const SESSION_ID = cryptoRandomId();
 if (sessionIdEl) sessionIdEl.textContent = SESSION_ID;
+sessionStorage.setItem("vf_session_id", SESSION_ID);
 
 /** ---- Lockdown trigger settings ---- **/
 const LOCKDOWN_URL = "lockdown/index.html";
