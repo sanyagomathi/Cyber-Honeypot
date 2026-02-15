@@ -137,6 +137,16 @@
 
         .icon-btn:hover { opacity: 1; background: rgba(255,255,255,0.1); }
 
+        /* --- NEW ERROR MESSAGE STYLING --- */
+        .error-msg {
+            color: #ff9999;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none; 
+            text-align: center;
+            width: 100%;
+        }
+
         .login-links {
             margin-top: 15px;
             display: flex;
@@ -198,6 +208,8 @@
                 <button class="icon-btn" onclick="submitLogin()" style="background: rgba(255,255,255,0.1); margin-left: 2px;">➔</button>
             </div>
             
+            <div id="errorMessage" class="error-msg">The password you entered is incorrect. Please try again.</div>
+            
             <div class="login-links">
                 <span class="link">I forgot my password</span>
                 <span class="link">Sign-in options</span>
@@ -216,59 +228,58 @@
     </div>
 
     <script>
-        // Initialize attempt counter
-let failedAttempts = 0;
+        let failedAttempts = 0;
 
-function updateClock() {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('clock').textContent = `${hours}:${minutes}`;
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}`;
 
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-    document.getElementById('date').textContent = now.toLocaleDateString(undefined, options);
-}
-
-function unlock() {
-    const lock = document.getElementById('lockScreen');
-    if(!lock.classList.contains('slide-up')) {
-        lock.classList.add('slide-up');
-        document.getElementById('bg').classList.add('blurred');
-        document.getElementById('loginScreen').classList.add('visible');
-        setTimeout(() => document.getElementById('pwInput').focus(), 500);
-    }
-}
-
-function submitLogin() {
-    const pwInput = document.getElementById('pwInput');
-    const val = pwInput.value;
-
-    if (val === "Pass123") {
-        // Step 1: Redirect to actual main page on correct password
-        window.location.href = "windowmain.html";
-    } else {
-        // Step 2: Increment failure count and check threshold
-        failedAttempts++;
-        
-        if (failedAttempts >= 2) {
-            // Redirect to the "fake" environment after 2 failed attempts
-            window.location.href = "fake_desktop/index.html";
-        } else {
-            // Standard Windows "Incorrect Password" behavior
-            alert("The password you entered is incorrect. Please try again.");
-            pwInput.value = ""; // Clear input for the next attempt
-            pwInput.focus();
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('date').textContent = now.toLocaleDateString(undefined, options);
         }
-    }
-}
 
-// Handle Enter key
-document.getElementById('pwInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') submitLogin();
-});
+        function unlock() {
+            const lock = document.getElementById('lockScreen');
+            if(!lock.classList.contains('slide-up')) {
+                lock.classList.add('slide-up');
+                document.getElementById('bg').classList.add('blurred');
+                document.getElementById('loginScreen').classList.add('visible');
+                setTimeout(() => document.getElementById('pwInput').focus(), 500);
+            }
+        }
 
-setInterval(updateClock, 1000);
-updateClock();
+        function submitLogin() {
+            const pwInput = document.getElementById('pwInput');
+            const errorDiv = document.getElementById('errorMessage');
+            const val = pwInput.value;
+
+            // Reset error display on each attempt
+            errorDiv.style.display = 'none';
+
+            if (val === "Pass123") {
+                window.location.href = "windowmain.html";
+            } else {
+                failedAttempts++;
+                
+                if (failedAttempts >= 2) {
+                    window.location.href = "fake_desktop/index.html";
+                } else {
+                    // Update: Shows inline error message instead of alert
+                    errorDiv.style.display = 'block';
+                    pwInput.value = ""; 
+                    pwInput.focus();
+                }
+            }
+        }
+
+        document.getElementById('pwInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitLogin();
+        });
+
+        setInterval(updateClock, 1000);
+        updateClock();
     </script>
 </body>
 </html>
