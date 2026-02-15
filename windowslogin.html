@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 Login</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* Background with blur transition */
+        .wallpaper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            z-index: 1;
+            transition: filter 0.6s ease, transform 0.6s ease;
+        }
+
+        .blurred {
+            filter: brightness(0.6) blur(30px);
+            transform: scale(1.05);
+        }
+
+        /* Lock Screen */
+        .lock-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.6s cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+
+        .slide-up { transform: translateY(-100%); }
+
+        .time-container { margin-top: 5vh; text-align: center; }
+        #clock { font-size: 110px; font-weight: 600; }
+        #date { font-size: 26px; margin-top: -10px; }
+
+        /* Login Screen */
+        .login-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease;
+        }
+
+        .visible { opacity: 1; visibility: visible; }
+
+        .profile-pic {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .user-name { font-size: 36px; font-weight: 400; margin-bottom: 25px; }
+
+        .input-wrapper {
+            width: 320px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-container {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-bottom: 2px solid #60cdff;
+            padding: 2px;
+        }
+
+        input[type="password"] {
+            flex: 1;
+            padding: 10px 12px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .icon-btn:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+
+        .login-links {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .link { cursor: pointer; opacity: 0.8; }
+        .link:hover { text-decoration: underline; opacity: 1; }
+
+        /* System Icons (Bottom Right) */
+        .system-tray {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            color: white;
+            z-index: 100;
+        }
+
+        .tray-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            opacity: 0.9;
+        }
+
+        .tray-item:hover { opacity: 1; }
+    </style>
+</head>
+<body onclick="unlock()">
+
+    <div class="wallpaper" id="bg"></div>
+
+    <div class="lock-screen" id="lockScreen">
+        <div class="time-container">
+            <div id="clock">00:00</div>
+            <div id="date">Loading...</div>
+        </div>
+    </div>
+
+    <div class="login-screen" id="loginScreen">
+        <div class="profile-pic">
+            <svg width="100" height="100" viewBox="0 0 24 24" fill="white"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" /></svg>
+        </div>
+        
+        <div class="user-name">User Name</div>
+
+        <div class="input-wrapper">
+            <div class="input-container">
+                <input type="password" id="pwInput" placeholder="Password">
+                <button class="icon-btn" title="Reveal password">👁</button>
+                <button class="icon-btn" onclick="submitLogin()" style="background: rgba(255,255,255,0.1); margin-left: 2px;">➔</button>
+            </div>
+            
+            <div class="login-links">
+                <span class="link">I forgot my password</span>
+                <span class="link">Sign-in options</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="system-tray">
+        <div class="tray-item" title="Language">
+            <span style="font-weight: 600;">ENG</span>
+            <span>US</span>
+        </div>
+        <div class="tray-item" title="Internet">📶</div>
+        <div class="tray-item" title="Accessibility">♿</div>
+        <div class="tray-item" title="Power">⏻</div>
+    </div>
+
+    <script>
+        // Initialize attempt counter
+let failedAttempts = 0;
+
+function updateClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clock').textContent = `${hours}:${minutes}`;
+
+    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    document.getElementById('date').textContent = now.toLocaleDateString(undefined, options);
+}
+
+function unlock() {
+    const lock = document.getElementById('lockScreen');
+    if(!lock.classList.contains('slide-up')) {
+        lock.classList.add('slide-up');
+        document.getElementById('bg').classList.add('blurred');
+        document.getElementById('loginScreen').classList.add('visible');
+        setTimeout(() => document.getElementById('pwInput').focus(), 500);
+    }
+}
+
+function submitLogin() {
+    const pwInput = document.getElementById('pwInput');
+    const val = pwInput.value;
+
+    if (val === "Pass123") {
+        // Step 1: Redirect to actual main page on correct password
+        window.location.href = "windowmain.html";
+    } else {
+        // Step 2: Increment failure count and check threshold
+        failedAttempts++;
+        
+        if (failedAttempts >= 2) {
+            // Redirect to the "fake" environment after 2 failed attempts
+            window.location.href = "fake_desktop/index.html";
+        } else {
+            // Standard Windows "Incorrect Password" behavior
+            alert("The password you entered is incorrect. Please try again.");
+            pwInput.value = ""; // Clear input for the next attempt
+            pwInput.focus();
+        }
+    }
+}
+
+// Handle Enter key
+document.getElementById('pwInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') submitLogin();
+});
+
+setInterval(updateClock, 1000);
+updateClock();
+    </script>
+</body>
+</html>

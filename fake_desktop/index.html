@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secure Workstation</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- DESKTOP VIEW -->
+  <main id="desktopView" class="desktop" aria-label="Desktop">
+
+    <div class="topbar">
+      <div class="top-left">
+        <span class="pill"><span class="dot"></span> Secure Desktop</span>
+
+      </div>
+      <div class="top-right">
+        <button id="exportLogs" class="pill btn"></button>
+        <span class="pill mono" id="clock"></span>
+      </div>
+    </div>
+
+    <section class="icons" aria-label="Desktop icons">
+      <button class="icon" id="openTerminal" type="button">
+        <div class="glyph">🖥️</div>
+        <div class="name">Terminal</div>
+      </button>
+
+      <button class="icon" id="openFiles" type="button">
+        <div class="glyph">📁</div>
+        <div class="name">Files</div>
+      </button>
+
+    <!-- TERMINAL WINDOW -->
+    <section id="terminalWindow" class="window" role="dialog">
+      <header class="winbar" id="dragBar">
+        <div class="winbtns">
+          <div class="winbtn close"></div>
+          <div class="winbtn min"></div>
+          <div class="winbtn max"></div>
+        </div>
+        <div class="wintitle">Terminal — restricted session</div>
+      </header>
+
+      <div class="content">
+        <pre id="termOut" class="term-out"></pre>
+
+        <div class="term-in">
+          <div id="prompt" class="prompt mono">guest@workstation:~$</div>
+          <input id="termCmd" class="mono" placeholder="try: help, ls, whoami, cat secrets.txt" autocomplete="off" />
+          <button id="runCmd" type="button">Run</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOG WINDOW -->
+    <section id="logWindow" class="window hidden" role="dialog">
+      <header class="winbar" id="dragBarLogs">
+        <div class="winbtns">
+          <div class="winbtn close" id="closeLogs"></div>
+          <div class="winbtn min"></div>
+          <div class="winbtn max"></div>
+        </div>
+        <div class="wintitle">Activity Log — session events</div>
+      </header>
+
+      <div class="content">
+        <div class="log-actions">
+          <button id="clearLogs" class="pill btn" type="button">Clear</button>
+          <span class="pill subtle">Stored locally for demo</span>
+        </div>
+        <pre id="logOut" class="log-out mono"></pre>
+      </div>
+    </section>
+
+    <footer class="taskbar">
+      <div class="pill"><span class="dot"></span> Desktop</div>
+      <div class="pill">🖥️ Terminal</div>
+      <div class="pill">📡 Network</div>
+      <div class="pill subtle">Session: <span class="mono" id="sessionId"></span></div>
+    </footer>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

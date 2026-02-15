@@ -1,0 +1,287 @@
+:root{
+  --bg: #0b1020;
+  --panel: rgba(255,255,255,.06);
+  --panel2: rgba(255,255,255,.08);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.70);
+  --bad: #ff5a6a;
+  --good: #38d27a;
+  --shadow: 0 20px 60px rgba(0,0,0,.45);
+  --radius: 18px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: var(--sans);
+  color: var(--text);
+  background:
+    radial-gradient(1000px 600px at 20% 10%, rgba(75,138,255,.25), transparent 60%),
+    radial-gradient(900px 700px at 80% 40%, rgba(56,210,122,.18), transparent 60%),
+    linear-gradient(180deg, #070a14, var(--bg));
+}
+
+.hidden{ display:none !important; }
+.mono{ font-family: var(--mono); }
+
+.login-wrap{
+  min-height:100%;
+  display:grid;
+  place-items:center;
+  padding:24px;
+}
+
+.card{
+  width:min(520px, 92vw);
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px 22px 18px;
+  backdrop-filter: blur(10px);
+}
+
+.brand{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-bottom:14px;
+}
+
+.logo{
+  width:42px;height:42px;border-radius:14px;
+  background: rgba(56,210,122,.25);
+  border:1px solid rgba(56,210,122,.35);
+  display:grid;place-items:center;
+  box-shadow: 0 10px 30px rgba(56,210,122,.15);
+}
+
+.title{ margin:0; font-size: 22px; letter-spacing:.2px; }
+.sub{ margin:4px 0 0; color: var(--muted); font-size: 14px; }
+
+label{ display:block; margin:14px 0 6px; color: var(--muted); font-size:13px; }
+input{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.10);
+  color: var(--text);
+  outline:none;
+}
+input:focus{
+  border-color: rgba(75,138,255,.55);
+  box-shadow: 0 0 0 3px rgba(75,138,255,.15);
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
+
+button{
+  border:0;
+  border-radius: 12px;
+  padding: 12px 12px;
+  background: rgba(75,138,255,.55);
+  color: var(--text);
+  cursor:pointer;
+  font-weight: 600;
+}
+button:hover{ filter: brightness(1.07); }
+button:active{ transform: translateY(1px); }
+
+.ghost{
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+.status{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.25);
+}
+.status.bad{ border-color: rgba(255,90,106,.45); }
+.status.good{ border-color: rgba(56,210,122,.45); }
+
+.hint{
+  margin:14px 0 0;
+  color: rgba(255,255,255,.68);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.kbd{
+  display:inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.fineprint{
+  margin-top:14px;
+  color: rgba(255,255,255,.55);
+  font-size: 12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.dot{
+  width:8px;height:8px;border-radius:999px;
+  background: rgba(56,210,122,.9);
+  box-shadow: 0 0 0 4px rgba(56,210,122,.12);
+}
+
+/* Desktop */
+.desktop{
+  min-height:100%;
+  padding: 18px 18px 70px;
+  position:relative;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  margin-bottom: 18px;
+}
+.top-left,.top-right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  font-size: 13px;
+}
+.pill.subtle{ color: rgba(255,255,255,.70); }
+.pill.btn{ cursor:pointer; }
+
+.icons{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.icon{
+  width:120px;
+  text-align:center;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 10px 8px;
+}
+.icon:hover{
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+}
+.glyph{ font-size: 34px; }
+.name{ margin-top:6px; font-size: 13px; color: rgba(255,255,255,.85); }
+
+.window{
+  position:absolute;
+  left: 80px;
+  top: 160px;
+  width: min(780px, 92vw);
+  height: min(520px, 62vh);
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  backdrop-filter: blur(10px);
+}
+
+.winbar{
+  user-select:none;
+  cursor: grab;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+.winbtns{ display:flex; gap:7px; }
+.winbtn{
+  width:12px;height:12px;border-radius:999px;
+  background: rgba(255,255,255,.20);
+}
+.winbtn.close{ background: rgba(255,90,106,.75); }
+.winbtn.min{ background: rgba(255,213,79,.75); }
+.winbtn.max{ background: rgba(56,210,122,.75); }
+
+.wintitle{ font-size: 13px; color: rgba(255,255,255,.85); }
+
+.content{
+  height: calc(100% - 44px);
+  display:flex;
+  flex-direction:column;
+}
+
+.term-out, .log-out{
+  flex:1;
+  margin:0;
+  padding: 14px;
+  overflow:auto;
+  color: rgba(255,255,255,.90);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.term-in{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
+.prompt{
+  color: rgba(255,255,255,.78);
+  white-space:nowrap;
+}
+#termCmd{
+  flex:1;
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.10);
+}
+#runCmd{
+  padding: 10px 12px;
+}
+
+.log-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
+
+.taskbar{
+  position:absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secure Workstation</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <main id="desktop" class="desktop" aria-label="Desktop">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="top-left">
+        <span class="chip"><span class="dot"></span> Secure Desktop</span>
+        <span class="chip subtle">Decoy session</span>
+        <span class="chip subtle mono">Session: <span id="sessionId"></span></span>
+      </div>
+
+      <div class="top-right">
+        <button id="downloadLogsTop" class="chip btn">Download Logs</button>
+        <span class="chip mono" id="clock"></span>
+      </div>
+    </div>
+
+    <!-- Desktop icons -->
+    <section class="icons" aria-label="Desktop icons">
+      <button class="icon" id="iconTerminal" type="button">
+        <div class="glyph">🖥️</div>
+        <div class="name">Terminal</div>
+      </button>
+
+      <button class="icon" id="iconFiles" type="button">
+        <div class="glyph">📁</div>
+        <div class="name">Files</div>
+      </button>
+
+      <button class="icon" id="iconLogs" type="button">
+        <div class="glyph">🧾</div>
+        <div class="name">Activity Logs</div>
+      </button>
+    </section>
+
+    <!-- START MENU -->
+    <section id="startMenu" class="start hidden" aria-label="Start menu">
+      <div class="start-head">
+        <div class="start-title">Start</div>
+        <button id="downloadLogsStart" class="chip btn small">Download Logs</button>
+      </div>
+
+      <div class="start-list">
+        <button class="start-item" id="startTerminal">🖥️ Terminal</button>
+        <button class="start-item" id="startFiles">📁 Files</button>
+        <button class="start-item" id="startLogs">🧾 Activity Logs</button>
+      </div>
+
+      <div class="start-foot">
+        <div class="muted">All activity is simulated and logged.</div>
+      </div>
+    </section>
+
+    <!-- WINDOWS AREA -->
+    <!-- Terminal Window -->
+    <section id="winTerminal" class="window" role="dialog" aria-label="Terminal window">
+      <header class="winbar" id="dragTerminal">
+        <div class="winbtns">
+          <button class="winbtn close" id="closeTerminal" title="Close"></button>
+          <span class="winsep"></span>
+          <span class="wintitle">Terminal — restricted session</span>
+        </div>
+        <div class="winmeta chip subtle mono" id="netBadge">NET: 10.0.0.23</div>
+      </header>
+
+      <div class="content">
+        <pre id="termOut" class="term-out mono"></pre>
+        <div class="term-in">
+          <div id="prompt" class="prompt mono">guest@workstation:~$</div>
+          <input id="termCmd" class="mono" placeholder="try: help, ls, cd Documents, cat notes.log" autocomplete="off"/>
+          <button id="runCmd" type="button">Run</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Files Window -->
+    <section id="winFiles" class="window hidden" role="dialog" aria-label="Files window">
+      <header class="winbar" id="dragFiles">
+        <div class="winbtns">
+          <button class="winbtn close" id="closeFiles" title="Close"></button>
+          <span class="winsep"></span>
+          <span class="wintitle">Files</span>
+        </div>
+        <div class="winmeta chip subtle mono" id="pathBar">/home/guest</div>
+      </header>
+
+      <div class="content files">
+        <aside class="sidebar">
+          <button class="side-item" data-path="/home/guest">Home</button>
+          <button class="side-item" data-path="/home/guest/Documents">Documents</button>
+          <button class="side-item" data-path="/home/guest/Downloads">Downloads</button>
+        </aside>
+
+        <section class="filepane">
+          <div class="filehead">
+            <div class="mono muted">Double-click a file to open (simulated).</div>
+          </div>
+          <div id="fileList" class="filelist"></div>
+          <div id="filePreview" class="preview mono"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Logs Window -->
+    <section id="winLogs" class="window hidden" role="dialog" aria-label="Logs window">
+      <header class="winbar" id="dragLogs">
+        <div class="winbtns">
+          <button class="winbtn close" id="closeLogs" title="Close"></button>
+          <span class="winsep"></span>
+          <span class="wintitle">Activity Logs</span>
+        </div>
+        <div class="winmeta">
+          <button id="clearLogs" class="chip btn small">Clear</button>
+          <button id="downloadLogs" class="chip btn small">Download</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <pre id="logOut" class="log-out mono"></pre>
+      </div>
+    </section>
+
+    <!-- Taskbar -->
+    <footer class="taskbar" aria-label="Taskbar">
+      <button id="startBtn" class="task startbtn" title="Start">⊞</button>
+
+      <div class="taskapps">
+        <button id="taskTerminal" class="task">🖥️ Terminal</button>
+        <button id="taskFiles" class="task">📁 Files</button>
+        <button id="taskLogs" class="task">🧾 Logs</button>
+      </div>
+
+      <div class="tray">
+        <button id="downloadLogsTray" class="task">⬇️ Logs</button>
+        <span class="chip mono" id="clock2"></span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
